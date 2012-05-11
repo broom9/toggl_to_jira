@@ -1,6 +1,6 @@
 toggl_key : "XXXXXXX"
-jira_url  : "http://jira.freewheel.tv"
+jira_url  : "http://jira.yourdomain.com"
 jira_user : "USER"
 jira_pass : "PASS"
-start_time : # leave blank to start from 00:00:00 today, the format is iso8601, a sample is "2010-02-12T15:35:47+02:00"
+start_time : # leave blank to start from 00:00:00 today, or specify a time in iso8601 format. A sample: "2012-05-15T03:00:00-04:00"
 end_time : # leave blank for all entries up to now

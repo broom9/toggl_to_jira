@@ -34,13 +34,15 @@ end
 entries = json['data']
 puts "Got #{entries.length} entries from toggl"
 
+IMPORTED_FILE = File.expand_path(File.dirname(__FILE__)) + "/imported.yml"
+imported = (YAML.load_file(IMPORTED_FILE) rescue [])
+
 puts "Connecting to JIRA"
 begin
 	logger = Logger.new(STDERR)
 	logger.sev_threshold = Logger::WARN
 	jira = Jira4R::JiraTool.new(2, CONFIG['jira_url'])
 	jira.logger = logger
-  # jira.driver.options["protocol.http.ssl_config.verify_mode"] = nil
 	jira.login CONFIG['jira_user'], CONFIG['jira_pass']
 rescue
 	puts "Failed to login to JIRA"
@@ -57,7 +59,9 @@ entries.each do |entry|
 	desc += " #{entry['project']['name']}" if entry['project'] and entry['project']['name']
 	jira_key = $1 if desc =~ /([A-Z]+-\d+)/
 
-	if entry['duration'].to_i < 0
+	if imported.include?(id)
+		puts "Entry '#{desc}' is skipped as it was already imported"
+	elsif entry['duration'].to_i < 0
 		puts "Entry '#{desc}' is skipped as it's still running"
 	elsif entry['duration'].to_i == 0
 		puts "Entry '#{desc}' is skipped as its duration is zero"
@@ -71,6 +75,8 @@ entries.each do |entry|
 		puts "Adding worklog #{remoteWorklog.timeSpent.rjust(4)} from #{remoteWorklog.startDate.localtime.strftime('%b %e, %l:%M %p')} to ticket #{jira_key}"
 		begin
 			jira.addWorklogAndAutoAdjustRemainingEstimate(jira_key, remoteWorklog)
+			imported.push id
+			File.open(IMPORTED_FILE, "w") {|f| f.write(imported.to_yaml) }
 		rescue SOAP::Error => error
 			STDERR.puts "Error: " + error
 		end
