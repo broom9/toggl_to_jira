@@ -49,4 +49,30 @@ rescue
 end
 puts "Successfully login to JIRA as #{CONFIG['jira_user']}"
 
+entries.each do |entry|
+	id = entry['id']
+	start = Time.iso8601(entry['start'])
+	duration = entry['duration'].to_i
+	desc = entry['description']
+	desc += " #{entry['project']['name']}" if entry['project'] and entry['project']['name']
+	jira_key = $1 if desc =~ /([A-Z]+-\d+)/
 
+	if entry['duration'].to_i < 0
+		puts "Entry '#{desc}' is skipped as it's still running"
+	elsif entry['duration'].to_i == 0
+		puts "Entry '#{desc}' is skipped as its duration is zero"
+	elsif jira_key.blank?
+		puts "Entry '#{desc}' is skipped as it doesn't have a JIRA ticket key"
+	else
+		remoteWorklog = Jira4R::V2::RemoteWorklog.new
+		remoteWorklog.comment = "#{desc} , generated from toggl_to_jira script"
+		remoteWorklog.startDate = start
+		remoteWorklog.timeSpent = "#{(duration / 60.0).round}m"
+		puts "Adding worklog #{remoteWorklog.timeSpent.rjust(4)} from #{remoteWorklog.startDate.localtime.strftime('%b %e, %l:%M %p')} to ticket #{jira_key}"
+		begin
+			jira.addWorklogAndAutoAdjustRemainingEstimate(jira_key, remoteWorklog)
+		rescue SOAP::Error => error
+			STDERR.puts "Error: " + error
+		end
+	end
+end
