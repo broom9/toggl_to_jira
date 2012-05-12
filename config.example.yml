@@ -1,4 +1,4 @@
-toggl_key : "XXXXXXX"
+toggl_key : "XXXXXXX" # Can be found on https://www.toggl.com/user/edit
 jira_url  : "http://jira.yourdomain.com"
 jira_user : "USER"
 jira_pass : "PASS"

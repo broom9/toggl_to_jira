@@ -76,6 +76,7 @@ entries.each do |entry|
 		begin
 			jira.addWorklogAndAutoAdjustRemainingEstimate(jira_key, remoteWorklog)
 			imported.push id
+			imported.shift if imported.size > 500 # avoid imported list increasing infinitely
 			File.open(IMPORTED_FILE, "w") {|f| f.write(imported.to_yaml) }
 		rescue SOAP::Error => error
 			STDERR.puts "Error: " + error
