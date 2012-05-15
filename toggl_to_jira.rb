@@ -8,7 +8,7 @@ require 'json'
 require 'jira4r'
 require 'yaml'
 
-CONFIG = YAML.load_file('config.yml') unless defined? CONFIG
+CONFIG = YAML.load_file(File.expand_path(File.dirname(__FILE__)) + '/config.yml') unless defined? CONFIG
 CONFIG['start_time'] ||= Time.now.beginning_of_day.iso8601
 uri = URI.parse("https://www.toggl.com/api/v6/time_entries.json?start_date=#{CGI.escape(CONFIG['start_time'])}" + 
 								(CONFIG['end_time'].blank? ? '' : "&end_date=#{CGI.escape(CONFIG['end_time'])}"))
