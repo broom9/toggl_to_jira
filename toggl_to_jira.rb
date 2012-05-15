@@ -60,19 +60,19 @@ entries.each do |entry|
 	jira_key = $1 if desc =~ /([A-Z]+-\d+)/
 
 	if imported.include?(id)
-		puts "Entry '#{desc}' is skipped as it was already imported"
+		puts "Skip #{jira_key} '#{desc}' as it was already imported"
 	elsif entry['duration'].to_i < 0
-		puts "Entry '#{desc}' is skipped as it's still running"
-	elsif entry['duration'].to_i == 0
-		puts "Entry '#{desc}' is skipped as its duration is zero"
+		puts "Skip #{jira_key} '#{desc}' as it's still running"
+	elsif entry['duration'].to_i < 60
+		puts "Skip #{jira_key} '#{desc}' as its duration is less than 1 minute"
 	elsif jira_key.blank?
-		puts "Entry '#{desc}' is skipped as it doesn't have a JIRA ticket key"
+		puts "Skip #{jira_key} '#{desc}' as it doesn't have a JIRA ticket key"
 	else
 		remoteWorklog = Jira4R::V2::RemoteWorklog.new
 		remoteWorklog.comment = "#{desc} , generated from toggl_to_jira script"
 		remoteWorklog.startDate = start
 		remoteWorklog.timeSpent = "#{(duration / 60.0).round}m"
-		puts "Adding worklog #{remoteWorklog.timeSpent.rjust(4)} from #{remoteWorklog.startDate.localtime.strftime('%b %e, %l:%M %p')} to ticket #{jira_key}"
+		puts "Add worklog #{remoteWorklog.timeSpent.rjust(4)} from #{remoteWorklog.startDate.localtime.strftime('%b %e, %l:%M %p')} to ticket #{jira_key} #{desc}"
 		begin
 			jira.addWorklogAndAutoAdjustRemainingEstimate(jira_key, remoteWorklog)
 			imported.push id
