@@ -2,5 +2,5 @@ toggl_key : "XXXXXXX" # Can be found on https://www.toggl.com/user/edit
 jira_url  : "http://jira.yourdomain.com"
 jira_user : "USER"
 jira_pass : "PASS"
-start_time : # leave blank to start from 00:00:00 today, or specify a time in iso8601 format. A sample: "2012-05-15T03:00:00-04:00"
-end_time : # leave blank for all entries up to now
+start_time : # Leave blank to start from 00:00:00 today. Or specify a time in iso8601 format. A sample: "2012-05-15T03:00:00-04:00". Or put an integer here means "start from X days ago"
+end_time : # Leave blank for all entries up to now

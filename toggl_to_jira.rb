@@ -10,6 +10,7 @@ require 'yaml'
 
 CONFIG = YAML.load_file(File.expand_path(File.dirname(__FILE__)) + '/config.yml') unless defined? CONFIG
 CONFIG['start_time'] ||= Time.now.beginning_of_day.iso8601
+CONFIG['start_time'] = CONFIG['start_time'].days.ago.iso8601 if CONFIG['start_time'].is_a?(Fixnum)
 uri = URI.parse("https://www.toggl.com/api/v6/time_entries.json?start_date=#{CGI.escape(CONFIG['start_time'])}" + 
 								(CONFIG['end_time'].blank? ? '' : "&end_date=#{CGI.escape(CONFIG['end_time'])}"))
 http = Net::HTTP.new(uri.host, uri.port)
