@@ -56,7 +56,7 @@ entries.each do |entry|
 	id = entry['id']
 	start = Time.iso8601(entry['start'])
 	duration = entry['duration'].to_i
-	desc = entry['description']
+	desc = entry['description'] || ''
 	desc += " #{entry['project']['name']}" if entry['project'] and entry['project']['name']
 	jira_key = $1 if desc =~ /([A-Z]+-\d+)/
 
