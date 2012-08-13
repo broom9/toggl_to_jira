@@ -2,24 +2,18 @@
 require "net/https"
 require "uri"
 require 'cgi'
-require 'rubygems'
-require 'active_support/all'
-require 'json'
-require 'jira4r'
-require 'yaml'
+require File.expand_path(File.dirname(__FILE__)) + '/shared.rb'
 
-CONFIG = YAML.load_file(File.expand_path(File.dirname(__FILE__)) + '/config.yml') unless defined? CONFIG
-CONFIG['start_time'] ||= Time.now.beginning_of_day.iso8601
-CONFIG['start_time'] = CONFIG['start_time'].days.ago.iso8601 if CONFIG['start_time'].is_a?(Fixnum)
-uri = URI.parse("https://www.toggl.com/api/v6/time_entries.json?start_date=#{CGI.escape(CONFIG['start_time'])}" + 
-								(CONFIG['end_time'].blank? ? '' : "&end_date=#{CGI.escape(CONFIG['end_time'])}"))
+config = load_config()
+uri = URI.parse("https://www.toggl.com/api/v6/time_entries.json?start_date=#{CGI.escape(config['start_time'])}" + 
+								(config['end_time'].blank? ? '' : "&end_date=#{CGI.escape(config['end_time'])}"))
 http = Net::HTTP.new(uri.host, uri.port)
 http.use_ssl = true
 http.verify_mode = OpenSSL::SSL::VERIFY_NONE
 
-puts "Connecting to toggl starting from #{CONFIG['start_time']}"
+puts "Connecting to toggl starting from #{config['start_time']}"
 request = Net::HTTP::Get.new(uri.request_uri)
-request.basic_auth(CONFIG['toggl_key'], "api_token")
+request.basic_auth(config['toggl_key'], "api_token")
 
 response = http.request(request)
 begin
@@ -38,20 +32,7 @@ puts "Got #{entries.length} entries from toggl"
 IMPORTED_FILE = File.expand_path(File.dirname(__FILE__)) + "/imported.yml"
 imported = (YAML.load_file(IMPORTED_FILE) rescue [])
 
-puts "Connecting to JIRA"
-begin
-	logger = Logger.new(STDERR)
-	logger.sev_threshold = Logger::WARN
-	jira = Jira4R::JiraTool.new(2, CONFIG['jira_url'])
-	jira.logger = logger
-	jira.login CONFIG['jira_user'], CONFIG['jira_pass']
-rescue
-	puts "Failed to login to JIRA"
-	puts $!
-	exit(1)
-end
-puts "Successfully login to JIRA as #{CONFIG['jira_user']}"
-
+jira = connect_jira(config)
 entries.each do |entry|
 	id = entry['id']
 	start = Time.iso8601(entry['start'])
