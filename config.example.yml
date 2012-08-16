@@ -4,3 +4,7 @@ jira_user : "USER"
 jira_pass : "PASS"
 start_time : # Leave blank to start from 00:00:00 today. Or specify a time in iso8601 format. A sample: "2012-05-15T03:00:00-04:00". Or put an integer here means "start from X days ago"
 end_time : # Leave blank for all entries up to now
+
+# Properties used by auto_watch_issues.rb
+jira_api_version : "2.0.alpha1" # this sample value is for JIRA 4.4.4
+auto_watch_jql : 'project = YOURPROJECT'

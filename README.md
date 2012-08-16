@@ -4,7 +4,7 @@
 
 [Toggl](http://www.toggl.com)  is a really good time tracking tool. 
 
-This script aims to merge the good parts of these 2 tools together. It allows you to easily import time log from toggl to JIRA. I used it on JIRA 4.4.4.
+This script (toggl_to_jira.rb) aims to merge the good parts of these 2 tools together. It allows you to easily import time log from toggl to JIRA. I used it on JIRA 4.4.4.
 
 Check [this blog post](http://b2.broom9.com/?p=10336) for more thoughts behind this tool.
 
@@ -22,3 +22,6 @@ Check [this blog post](http://b2.broom9.com/?p=10336) for more thoughts behind t
 
 It will create a file "imported.yml" to store entries which are successfully pushed to JIRA, so they won't be imported into JIRA again. This list keeps 500 entry IDs at most.
 
+# Bonus Tools
+
+* auto_watch_issues: execute this script periodically to auto watch any issues found by a JQL. 
