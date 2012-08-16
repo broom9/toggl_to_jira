@@ -24,4 +24,5 @@ It will create a file "imported.yml" to store entries which are successfully pus
 
 # Bonus Tools
 
-* auto_watch_issues: execute this script periodically to auto watch any issues found by a JQL. 
+* auto_watch_issues.rb: execute this script periodically to auto watch any issues found by a JQL. 
+* jira_issue_to_toggl_project.rb: sync a JIRA issue to toggl as a project. Usage is `./jira_issue_to_toggl_project.rb YOURPROJECT-1984`. By setting "default_project" property in config.xml, the project name can be omitted.
