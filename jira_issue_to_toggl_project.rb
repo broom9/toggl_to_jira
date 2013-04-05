@@ -4,34 +4,62 @@ require 'curb'
 
 config = load_config()
 
-issue_key = ARGV[0]
+# Fetch clients
+clients = toggl_get("https://www.toggl.com/api/v8/workspaces/#{config["toggl_workspace_id"]}/clients", config)
+puts JSON.pretty_generate(clients)
 
-if issue_key.blank?
-	puts "Need to input an issue key"
-	exit 1
-end
+# Fetch existing projects
+projects = toggl_get("https://www.toggl.com/api/v8/workspaces/#{config["toggl_workspace_id"]}/projects", config).each{|p| p["jira_key"] = p["name"][/[A-Z]+-\d+/]}
+puts JSON.pretty_generate(projects)
 
-issue_key = config['default_project'] + "-" + issue_key if issue_key =~ /\d+/
+# Fetch JIRA issues
+issues = JSON.parse(`curl -s -X GET -u #{config['jira_user']}:#{config['jira_pass']} -H 'Content-Type: application/json' #{config['jira_url']}/rest/api/#{config['jira_api_version']}/search?jql=#{CGI.escape(config['jira_sync_jql'])}`)['issues']
+puts JSON.pretty_generate(issues)
 
-issue = JSON.parse(`curl -v -X GET -u #{config['jira_user']}:#{config['jira_pass']} -H 'Content-Type: application/json' #{config['jira_url']}/rest/api/#{config['jira_api_version']}/issue/#{issue_key}`)
+# Create/update Toggl projects
 
-if issue
-	json_data = 
-	{ 
-		"project" => {
-			"billable" => false,
-			"workspace" => { "id" => config['toggl_workspace_id']},
-			"name" => issue['key'] + ", " + issue['fields']['summary']['value'],
-			"automatically_calculate_estimated_workhours" => false
+issues.each do |issue|
+	# Find client
+	jira_client_name = issue['fields']['customfield_12190'][0]['value'];
+	toggl_client = clients.find{|c| c["name"].casecmp(jira_client_name) == 0}
+	# Or create a new client
+	if !toggl_client && jira_client_name
+		puts "Create client #{jira_client_name}"
+		toggl_post("https://www.toggl.com/api/v8/clients", {
+			"client" => {
+				"name" => jira_client_name,
+				"wid" => config["toggl_workspace_id"]
+			}
+		}, config)
+		puts "Reload clients"
+		clients = toggl_get("https://www.toggl.com/api/v8/workspaces/#{config["toggl_workspace_id"]}/clients", config)
+		toggl_client = clients.find{|c| c["name"].casecmp(jira_client_name) == 0}
+	end
+
+	existing_project = projects.find{|p| p["jira_key"] == issue["key"]}
+	if existing_project
+		json_data = 
+		{ 
+			"project" => {
+				"name" => issue['key'] + ", " + issue['fields']['summary'],
+				"cid" => toggl_client ? toggl_client["id"] : nil
+			}
 		}
-	}
-
-	Curl::Easy.http_post("https://www.toggl.com/api/v6/projects.json", json_data.to_json) do |curl|
-		curl.headers['Content-Type'] = 'application/json'
-		curl.http_auth_types = :basic
-		curl.username = config['toggl_key']
-		curl.password = "api_token"
-		# curl.verbose = true
+		puts "#{issue["key"]} Find an existing project, putting #{JSON.pretty_generate(json_data)}"
+		toggl_put("https://www.toggl.com/api/v8/projects/#{existing_project["id"]}", json_data, config)
+	else
+		json_data = 
+		{ 
+			"project" => {
+				"billable" => false,
+				"wid" => config['toggl_workspace_id'],
+				"name" => issue['key'] + ", " + issue['fields']['summary'],
+				"cid" => toggl_client ? toggl_client["id"] : nil,
+				"is_private" => false
+			}
+		}
+		puts "#{issue["key"]} Create a new project, posting #{JSON.pretty_generate(json_data)}"
+		toggl_post("https://www.toggl.com/api/v8/projects", json_data, config)
 	end
 end
 
