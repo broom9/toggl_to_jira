@@ -21,7 +21,7 @@ def load_config
 	config['start_time'] ||= Time.now.beginning_of_day.iso8601
 	config['start_time'] = config['start_time'].days.ago.iso8601 if config['start_time'].is_a?(Fixnum)
 	if config['jira_pass'].blank?
-		config['jira_pass'] = get_keychain_password(config['jira_url'])
+		config['jira_pass'] = get_keychain_password(config['jira_url'].sub(/http(s)?:\/\//, ''))
     # puts "Got JIRA password from keychain as #{config['jira_pass']}"
 	end
 	return config
